@@ -123,6 +123,7 @@ const Nav = {
     App.render();
   }
 };
+window.Nav = Nav;
 
 let _tenantInfo = null;
 let _tenantUsers = [];
