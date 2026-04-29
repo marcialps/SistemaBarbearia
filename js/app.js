@@ -666,7 +666,7 @@ export const App = {
     const dd=document.getElementById('userDD');if(dd)dd.remove();
 
     const hasTenant = !!DB.getBarbeariaId();
-    if(!hasTenant && hash !== 'superadmin'){
+    if(!hasTenant && hash !== 'superadmin' && hash !== 'login' && hash !== 'register'){
       if(Auth.isSuperAdmin()){ Nav.go('superadmin'); return; }
       else if(Auth.isAdmin() && Auth.cur.barbeariaId){ window.location.href = `?b=${Auth.cur.barbeariaId}#admin`; return; }
       else { app.innerHTML = rNoTenant(); return; }
