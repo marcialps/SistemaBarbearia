@@ -778,7 +778,36 @@ export const App = {
     const tnts = await DB.getAllBarbearias();
     const tb = document.getElementById('tbTenants');
     if(!tb) return;
-    tb.innerHTML = tnts.map(t => `<tr><td>${t.id}</td><td>${esc(t.name)}</td><td><span class="badge ${t.status==='active'?'b-success':'b-danger'}">${t.status}</span></td><td><a href="?b=${t.id}" target="_blank">Acessar 🔗</a></td></tr>`).join('');
+    tb.innerHTML = tnts.map(t => {
+      const isAct = t.status === 'active';
+      return `<tr>
+        <td>${t.id}</td>
+        <td>${esc(t.name)}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px">
+            <label class="toggle-switch">
+              <input type="checkbox" onchange="App.toggleTenant('${t.id}', this.checked)" ${isAct ? 'checked' : ''}>
+              <span class="toggle-slider"></span>
+            </label>
+            <span style="font-size:.75rem;font-weight:700;color:var(--${isAct?'success':'text3'})">${isAct ? 'ATIVO' : 'INATIVO'}</span>
+          </div>
+        </td>
+        <td><a href="?b=${t.id}" target="_blank" style="${!isAct?'pointer-events:none;opacity:0.5':''}">Acessar 🔗</a></td>
+      </tr>`;
+    }).join('');
+  },
+
+  async toggleTenant(id, isActive) {
+    const newStatus = isActive ? 'active' : 'inactive';
+    try {
+      await DB.updateBarbeariaStatus(id, newStatus);
+      T.ok(`Tenant ${isActive ? 'ativado' : 'desativado'}.`);
+      this._loadTenants();
+    } catch(e) {
+      console.error(e);
+      T.err('Erro ao atualizar status.');
+      this._loadTenants();
+    }
   },
 
   async logout(){ await Auth.logout(); T.info('Você saiu.'); window.location.hash='login'; this.render(); },
@@ -918,7 +947,7 @@ export const App = {
     if(tenantId){
       DB.setBarbeariaId(tenantId);
       _tenantInfo = await DB.getBarbeariaBySlug(tenantId);
-      if(!_tenantInfo) { document.getElementById('app').innerHTML = rNoTenant(); return; }
+      if(!_tenantInfo || _tenantInfo.status !== 'active') { document.getElementById('app').innerHTML = rNoTenant(); return; }
     }
 
     Auth.init((user) => { this.render(); });
