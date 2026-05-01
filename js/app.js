@@ -205,6 +205,13 @@ const rLogin = () => `
       </div>
       <div id="loginErr" class="ferr" style="margin-bottom:12px;display:none"></div>
       <button type="submit" class="btn btn-primary btn-lg w-full" id="btnLogin">Entrar</button>
+      <div class="divider" style="color:var(--text3);font-size:.8rem;text-align:center;position:relative;margin:24px 0">
+        <span style="background:var(--bg2);padding:0 10px;position:relative;z-index:1;font-weight:600">OU</span>
+        <div style="position:absolute;top:50%;left:0;right:0;height:1px;background:var(--border);transform:translateY(-50%)"></div>
+      </div>
+      <button type="button" class="btn btn-ghost btn-lg w-full" style="margin-bottom:18px;gap:10px" onclick="App.loginGoogle()">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style="width:20px"> Continuar com Google
+      </button>
     </form>
     ${DB.getBarbeariaId() ? `<p class="auth-foot">Não tem conta? <a href="#register" style="font-weight:600">Cadastre-se grátis</a></p>` : ''}
   </div>
@@ -228,6 +235,13 @@ const rRegister = () => `
       <div class="fg"><label class="flabel">Confirmar senha *</label><input type="password" name="pw2" class="fc" required></div>
       <div id="regErr" class="ferr" style="margin-bottom:12px;display:none"></div>
       <button type="submit" class="btn btn-primary btn-lg w-full" id="btnReg">Criar minha conta</button>
+      <div class="divider" style="color:var(--text3);font-size:.8rem;text-align:center;position:relative;margin:24px 0">
+        <span style="background:var(--bg2);padding:0 10px;position:relative;z-index:1;font-weight:600">OU</span>
+        <div style="position:absolute;top:50%;left:0;right:0;height:1px;background:var(--border);transform:translateY(-50%)"></div>
+      </div>
+      <button type="button" class="btn btn-ghost btn-lg w-full" style="margin-bottom:18px;gap:10px" onclick="App.loginGoogle()">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style="width:20px"> Continuar com Google
+      </button>
     </form>
     <p class="auth-foot">Já tem conta? <a href="#login" style="font-weight:600">Entrar</a></p>
   </div>
@@ -742,6 +756,22 @@ export const App = {
       }
       catch(ex){err.textContent=ex.message;err.style.display='block'; b.disabled=false;b.textContent='Criar minha conta';}
     };
+  },
+
+  async loginGoogle() {
+    const err = document.getElementById('loginErr') || document.getElementById('regErr');
+    try {
+      const u = await Auth.loginWithGoogle(DB.getBarbeariaId());
+      if(u.role === 'customer' || u.role === 'admin') {
+         if(u.barbeariaId !== DB.getBarbeariaId() && DB.getBarbeariaId()) {
+           await Auth.logout(); throw new Error('Conta não pertence a esta barbearia.');
+         }
+      }
+      T.ok(`Bem-vindo, ${u.name}!`); Nav.go(u.role==='admin'?'admin':u.role==='superadmin'?'superadmin':'home');
+    } catch(ex) {
+      if (err) { err.textContent=ex.message; err.style.display='block'; }
+      else { T.err(ex.message); }
+    }
   },
 
   async _loadTenants(){

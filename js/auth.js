@@ -1,4 +1,4 @@
-import { auth, db, doc, getDoc, setDoc, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from './firebase-config.js';
+import { auth, db, doc, getDoc, setDoc, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, googleProvider, signInWithPopup } from './firebase-config.js';
 import { DB } from './db.js';
 
 export const Auth = {
@@ -37,6 +37,38 @@ export const Auth = {
       console.error(e);
       if (e.code === 'auth/invalid-credential') throw new Error('E-mail ou senha incorretos.');
       throw new Error('Falha ao fazer login: ' + e.message);
+    }
+  },
+
+  async loginWithGoogle(barbeariaId = null) {
+    try {
+      const cred = await signInWithPopup(auth, googleProvider);
+      const user = cred.user;
+      
+      const docRef = doc(db, 'users', user.uid);
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+        this.cur = { id: user.uid, ...docSnap.data() };
+        return this.cur;
+      } else {
+        const tId = barbeariaId || DB.getBarbeariaId();
+        const userDoc = {
+          name: user.displayName || 'Usuário',
+          email: user.email,
+          phone: user.phoneNumber || '',
+          role: 'customer',
+          barbeariaId: tId,
+          points: 0,
+          createdAt: new Date().toISOString().split('T')[0]
+        };
+        await setDoc(docRef, userDoc);
+        this.cur = { id: user.uid, ...userDoc };
+        return this.cur;
+      }
+    } catch (e) {
+      console.error(e);
+      throw new Error('Falha no login com Google: ' + e.message);
     }
   },
 
